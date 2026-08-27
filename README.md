@@ -5,4 +5,4 @@ The workflow implements a comparative seascape genomics analysis of four reef fi
 
 Thesis: Link will be added upon public access.
 
-all_tables_in_MT_NOS_260827 -> Contains all tables included in the thesis, along with detailed results and information on the software and tool versions used throughout the workflow.
+"data/all_tables_in_MT_NOS_260827.xlsx" -> Contains all tables included in the thesis, along with detailed results and information on the software and tool versions used throughout the workflow.

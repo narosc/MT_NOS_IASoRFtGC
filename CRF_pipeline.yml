@@ -1,0 +1,25 @@
+name: CRF_pipeline
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  # data acquisition
+  - sra-tools
+  - parallel-fastq-dump
+
+  # quality control and preprocessing
+  - fastqc
+  - trim-galore
+  - multiqc
+
+  # alignment and variant calling
+  - samtools
+  - nextgenmap
+  - bcftools
+
+  # sequence similarity search
+  - blast
+
+  # minimal base R
+  - r-base

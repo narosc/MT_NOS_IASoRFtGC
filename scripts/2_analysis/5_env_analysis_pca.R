@@ -96,7 +96,7 @@ ylims = c(20.5, 27.5) # latitude
 
 ## define species specific end year for animation calculations
 # define Yend
-yend <- 2020
+yend <- 2014
 
 #=============================================================================
 ## 1) visualise heat maps of the data - create animations 

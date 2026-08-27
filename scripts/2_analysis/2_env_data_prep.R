@@ -77,7 +77,7 @@ save_path <- "intermed_outputs/epinephelus_striatus/env_data_inputs"
 
 ## define species specific end year for animation calculations
 # define Yend
-yend <- 2020
+yend <- 2014
 
 #=============================================================================
 ## 1. first output -> 10 km buffer, averages for each year

@@ -2,20 +2,17 @@
 ### tenth - visualisation of picmin and gene ontology
 #==============================================================================
 
-# This script visualises the picmin outputs by also combining them with the
-# gene ontology outputs.
+# This script visualises the picmin outputs.
 # Inputs:
 # 1) picmin output -> results list (CA and LFMM)
-# 2) gene ontology outputs -> BP/CC/MF_gsc for CA and LFMM
 # Output:
 # 1. main summary plot: panel a + panel b (picmin hits), patchwork side by side
-# 2. supplementary plot: panel c (GO heatmap), standalone
 
 # set correct working directory:
 setwd("C:/Users/Admin/Documents/Uni_Zuerich/Masters_Thesis/CoralReef_fish_local")
 
 # Author: Naroa Olivia Schweizer
-# last update: 06.08.26
+# last update: 17.08.26
 
 # load libraries
 library(dplyr)       # data wrangling (filter, summarise, join)
@@ -99,6 +96,7 @@ hits_all$env_var <- factor(hits_all$env_var, levels = env_order)
 # get ridd of env_prefix for the variables
 strip_env_prefix <- function(x) sub("^s_allDB_?", "", x)
 
+# create consistend legend text/title sizes for all panels
 row_grid_theme <- theme(
   panel.spacing.y   = unit(0, "lines"),
   panel.border      = element_rect(colour = "grey65", fill = NA, linewidth = 0.3),
@@ -108,8 +106,7 @@ row_grid_theme <- theme(
   axis.ticks.y = element_blank()
 )
 
-# center bottom legends
-# -> explicit order = keeps CA above LFMM in the legend box, regardless of layer draw order
+# center bottom legends -> explicit order
 ca_legend_guide   <- guide_legend(title.position = "top", title.hjust = 0.5, nrow = 1, order = 1)
 lfmm_legend_guide <- guide_legend(title.position = "top", title.hjust = 0.5, nrow = 1, order = 2)
 
@@ -301,9 +298,36 @@ panel_b_plot <-
   row_grid_theme
 
 #-----------------------------------------------------------------------------
+## 2.3) plot panel right: GO enrichment heatmap (BP/CC/MF)
+#-----------------------------------------------------------------------------
+
+# create heatmap plot for GO -> columns split by ontology (BP/CC/MF), rows by env_var as before
+panel_c_plot <-
+  ggplot(panelC_data, aes(x = go_term, y = "row", fill = fdr)) +
+  geom_tile(colour = "grey85") +
+  facet_grid(rows = vars(env_var), cols = vars(ontology), switch = "both", drop = FALSE,
+             scales = "free_x", space = "free_x",
+             labeller = labeller(env_var = strip_env_prefix)) +
+  scale_fill_gradientn(colours = c("#03045E", "#0077B6", "#00B4D8", "#90E0EF", "#CAF0F8"),
+                       limits = c(0, 0.05), name = "GO q-value") +
+  # q-values are Benjamini-Hochberg FDR-corrected, from SetRank
+  labs(x = "GO term, grouped by ontology (BP = biological process, CC = cellular component, MF = molecular function)",
+       y = NULL,
+       title = "Gene Ontology Terms across Environmental Variables for PicMin Genes (q-value < 0.25)") +
+  theme_minimal(base_size = 11) +
+  # own y-axis env. variable, own x-axis strip per ontology (BP/CC/MF)
+  theme(strip.placement = "outside",
+        strip.text.y.left = element_text(angle = 0, hjust = 1),
+        strip.text.x.bottom = element_text(face = "bold"),
+        axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 9),
+        panel.grid.major.x = element_line(colour = "grey85", linewidth = 0.3),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor = element_blank()) +
+  row_grid_theme
+
+#-----------------------------------------------------------------------------
 ## 2.4) combine panels a + b into main summary plot (patchwork, side by side)
 #-----------------------------------------------------------------------------
-# -> panel c (GO) is now kept out of this combined figure, see 2.5 below
 
 # tag panels a/b directly via labs(tag = ...)
 # panel_a_plot <- panel_a_plot + labs(tag = "a")

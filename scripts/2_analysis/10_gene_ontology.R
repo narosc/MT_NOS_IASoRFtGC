@@ -73,9 +73,7 @@ q_threshold <- 0.25
 ## 1.1) prepare GO annotation table
 #-----------------------------------------------------------------------------
 
-# function to build one GO annotation table (one gene <-> one GO term per
-# row); written once and reused for BP (biological process), MF (molecular
-# function) and CC (cellular component)
+# function to build one GO annotation table
 build_annotation_table <- function(ens_up, go_col, db_name) {
   do.call(rbind, by(ens_up, ens_up$gene_stable_id, function(g) {
     
@@ -91,7 +89,7 @@ build_annotation_table <- function(ens_up, go_col, db_name) {
     
     # prepare other columns for output
     geneID <- unique(g$gene_stable_id)  # gene ID
-    description <- "-"                  # we leave this empty
+    description <- "-"                  
     dbName <- db_name                   # name of GO database
     
     # set to NA if fields are missing
@@ -107,9 +105,7 @@ build_annotation_table <- function(ens_up, go_col, db_name) {
 ## 1.2) create picmin gene universe
 #-----------------------------------------------------------------------------
 
-# function to build & save the BP/MF/CC gene set collections for one method's
-# PicMin gene universe (all loci PicMin ever tested for that method, across
-# every env variable)
+# function to build & save the BP/MF/CC gene set collections for one CA and LFMM
 build_gene_universe <- function(picmin_path, method_label) {
   gsc_paths <- setNames(
     file.path(out_dir, paste0(c("BP", "MF", "CC"), "_gsc_", method_label, ".rda")),
@@ -216,9 +212,7 @@ run_setrank_for_env <- function(env_var, picmin_obj, method_label, BP_gsc, MF_gs
     # run setrank
     net <- setRankAnalysis(TOPgenes, gsc, use.ranks = TRUE, setPCutoff = 0.1, fdrCutoff = 0.1)
     
-    # if 0 gene sets come out significant, SetRank's exportSingleResult()
-    # fails trying to order a column that doesn't exist; skip the export,
-    # leave a marker behind, and return NULL instead
+    # if 0 gene sets come out significant -> skip export
     if (igraph::vcount(net) == 0) {
       message("  no significant ", db_name, " gene sets for ", env_var)
       file.create(empty_marker)

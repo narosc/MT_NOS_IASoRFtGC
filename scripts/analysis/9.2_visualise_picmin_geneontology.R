@@ -41,22 +41,6 @@ picmin_path <- "intermed_outputs/picmin/picmin_results_ca.rda"
 load(picmin_path)                       # object: picmin_results
 ca_picmin <- picmin_results
 
-## Gene Ontology output
-# biological process
-GO_BP_lfmm_path <- "intermed_outputs/setrank/BP_gsc_lfmm.rda"
-load(GO_BP_lfmm_path)                   # object: BP_gsc
-GO_BP_collection <- BP_gsc              # reused for both methods
-
-# cellular component
-GO_CC_lfmm_path <- "intermed_outputs/setrank/CC_gsc_lfmm.rda"
-load(GO_CC_lfmm_path)                   # object: CC_gsc
-GO_CC_collection <- CC_gsc              # reused for both methods
-
-# molecular function
-GO_MF_lfmm_path <- "intermed_outputs/setrank/MF_gsc_lfmm.rda"
-load(GO_MF_lfmm_path)                   # object: MF_gsc
-GO_MF_collection <- MF_gsc              # reused for both methods
-
 #==============================================================================
 ## 1) prepare PicMin/GO output for plotting
 #==============================================================================
@@ -115,17 +99,6 @@ hits_all$env_var <- factor(hits_all$env_var, levels = env_order)
 # get ridd of env_prefix for the variables
 strip_env_prefix <- function(x) sub("^s_allDB_?", "", x)
 
-# create consistend legend text/title sizes for all panels
-# row_grid_theme <- theme(
-#   panel.spacing.y   = unit(0, "lines"),
-#   panel.border      = element_rect(colour = "grey65", fill = NA, linewidth = 0.3),
-#   panel.grid.major.y = element_blank(),
-#   panel.grid.minor   = element_blank(),
-#   axis.text.y  = element_blank(),
-#   axis.ticks.y = element_blank(),
-#   legend.title = element_text(size = 9),
-#   legend.text  = element_text(size = 8)
-# )
 row_grid_theme <- theme(
   panel.spacing.y   = unit(0, "lines"),
   panel.border      = element_rect(colour = "grey65", fill = NA, linewidth = 0.3),
@@ -217,65 +190,6 @@ bar_totals <- panelA_data %>%
 
 ## shared x-axis limit for panels a AND b (same underlying gene totals)
 x_max <- max(bar_totals$total)
-
-#-----------------------------------------------------------------------------
-## 1.6) prepare data for GO plot
-#-----------------------------------------------------------------------------
-
-# set cores (serial here not parallel)
-options(mc.cores = 1)
-
-# run set rank
-run_go_enrichment_for_variable <- function(env_name, hits_all, go_collection,
-                                           set_p_cutoff = 0.01, fdr_cutoff = 0.05) {
-  genes <- hits_all %>%
-    dplyr::filter(env_var == env_name) %>%
-    dplyr::pull(locus) %>%
-    unique()
-  
-  if (length(genes) == 0) return(NULL)
-  
-  net <- SetRank::setRankAnalysis(genes, go_collection, use.ranks = FALSE,
-                                  setPCutoff = set_p_cutoff, fdrCutoff = fdr_cutoff)
-  
-  if (igraph::vcount(net) == 0) return(NULL)
-  
-  res <- igraph::as_data_frame(net, what = "vertices")
-  data.frame(env_var = env_name,
-             go_term = res$description,
-             fdr     = res$adjustedPValue,
-             stringsAsFactors = FALSE)
-}
-
-# run enrichment separately per GO domain (BP/CC/MF), tag rows with the domain they came from
-panelC_BP <- dplyr::bind_rows(
-  lapply(env_order, run_go_enrichment_for_variable,
-         hits_all = hits_all, go_collection = GO_BP_collection)
-)
-if (nrow(panelC_BP) > 0) panelC_BP$ontology <- "BP"
-
-panelC_CC <- dplyr::bind_rows(
-  lapply(env_order, run_go_enrichment_for_variable,
-         hits_all = hits_all, go_collection = GO_CC_collection)
-)
-if (nrow(panelC_CC) > 0) panelC_CC$ontology <- "CC"
-
-panelC_MF <- dplyr::bind_rows(
-  lapply(env_order, run_go_enrichment_for_variable,
-         hits_all = hits_all, go_collection = GO_MF_collection)
-)
-if (nrow(panelC_MF) > 0) panelC_MF$ontology <- "MF"
-
-# combine all three GO domains into one df for panel c
-panelC_data <- dplyr::bind_rows(panelC_BP, panelC_CC, panelC_MF)
-
-panelC_data$env_var <- factor(panelC_data$env_var, levels = env_order)
-
-# keep ontology in a fixed reading order: BP, CC, MF
-panelC_data$ontology <- factor(panelC_data$ontology, levels = c("BP", "CC", "MF"))
-
-# keep GO terms ordered alphabetically along x, within each ontology
-panelC_data$go_term <- factor(panelC_data$go_term, levels = sort(unique(panelC_data$go_term)))
 
 #==============================================================================
 ## 2) create plots and combine into main + supplementary summary plots
@@ -387,34 +301,6 @@ panel_b_plot <-
   row_grid_theme
 
 #-----------------------------------------------------------------------------
-## 2.3) plot panel right: GO enrichment heatmap (BP/CC/MF)
-#-----------------------------------------------------------------------------
-
-# create heatmap plot for GO -> columns split by ontology (BP/CC/MF), rows by env_var as before
-panel_c_plot <-
-  ggplot(panelC_data, aes(x = go_term, y = "row", fill = fdr)) +
-  geom_tile(colour = "grey85") +
-  facet_grid(rows = vars(env_var), cols = vars(ontology), switch = "both", drop = FALSE,
-             scales = "free_x", space = "free_x",
-             labeller = labeller(env_var = strip_env_prefix)) +
-  scale_fill_gradientn(colours = c("#03045E", "#0077B6", "#00B4D8", "#90E0EF", "#CAF0F8"),
-                       limits = c(0, 0.05), name = "GO q-value") +
-  # q-values are Benjamini-Hochberg FDR-corrected, from SetRank
-  labs(x = "GO term, grouped by ontology (BP = biological process, CC = cellular component, MF = molecular function)",
-       y = NULL,
-       title = "Gene Ontology Terms across Environmental Variables for PicMin Genes (q-value < 0.25)") +
-  theme_minimal(base_size = 11) +
-  # own y-axis env. variable, own x-axis strip per ontology (BP/CC/MF)
-  theme(strip.placement = "outside",
-        strip.text.y.left = element_text(angle = 0, hjust = 1),
-        strip.text.x.bottom = element_text(face = "bold"),
-        axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 9),
-        panel.grid.major.x = element_line(colour = "grey85", linewidth = 0.3),
-        panel.grid.major.y = element_blank(),
-        panel.grid.minor = element_blank()) +
-  row_grid_theme
-
-#-----------------------------------------------------------------------------
 ## 2.4) combine panels a + b into main summary plot (patchwork, side by side)
 #-----------------------------------------------------------------------------
 # -> panel c (GO) is now kept out of this combined figure, see 2.5 below
@@ -437,19 +323,6 @@ final_plot_main <-
 # display
 final_plot_main
 # save: 1200 x 800
-
-#-----------------------------------------------------------------------------
-## 2.5) panel c (GO) as standalone supplementary plot
-#-----------------------------------------------------------------------------
-
-# -> no tag letter, this is a single-panel supplementary figure on its own
-
-# rename panel c plot
-final_plot_supp <- panel_c_plot
-
-# display
-final_plot_supp
-# save: 800 x 500
 
 #==============================================================================
 ## 3) summary statistics for thesis text (median / IQR)

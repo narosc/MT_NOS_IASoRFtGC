@@ -125,10 +125,4 @@ if (!is.null(decay_fit)) {
   warning('exponential decay fit did not converge - report the binned mean curve visually instead of a half-decay distance for this species')
 }
 
-### NOTE: this fit assumes R2 approaches a stable background level c as distance
-### increases. For a species/chromosome with elevated, non-decaying LD across
-### the whole window (see LD write-up for Amphiprion bicinctus), the model may
-### not converge, or may return an unstable/very large half_decay_dist - if so,
-### that itself is worth reporting (i.e. "no reliable exponential decay could be
-### fitted"), rather than forcing a number that doesn't reflect the data.
 

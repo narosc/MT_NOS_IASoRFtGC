@@ -1,7 +1,7 @@
 # MT_NOS_IASoRFtGC
-This repository contains all scripts and input run tables for the Master’s thesis "Investigating Adaptive Signals of Reef Fish to Global Change" by Naroa Schweizer. 
+This repository contains all scripts and input run tables for the Master’s thesis "Exploring Genomic Adaptations of Reef Fish to Global Change - A Comparative Seascape Genomics Approach" by Naroa Schweizer. 
 
-The workflow implements a comparative seascape genomics analysis of four reef fish species, including genomic data processing, LFMM and Kendall’s CA genotype-environment association analyses, cross-species analysis with PicMin, and functional annotation using zebrafish as a common reference.
+The workflow implements a comparative seascape genomics analysis of four reef fish species (*Amphiprion bicinctus*, *Epinephelus striatus*, *Pterois volitans* and *Siphamia tubifer*), including genomic data processing, Latent Factor Mixed Model and Kendall’s Correlation Analysis genotype-environment association analyses, cross-species analysis with PicMin, and exploring functional annotation using zebrafish as a common reference.
 
 Thesis: Link will be added upon public access.
 
